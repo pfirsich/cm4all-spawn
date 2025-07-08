@@ -14,7 +14,8 @@
  */
 class UnifiedCgroupWatch final : TreeWatch {
 	typedef BoundMethod<void(const char *relative_path) noexcept> Callback;
-	const Callback callback;
+	const Callback on_cgroup_added_callback;
+	const Callback on_cgroup_empty_callback;
 
 	class Group;
 
@@ -24,7 +25,7 @@ class UnifiedCgroupWatch final : TreeWatch {
 
 public:
 	UnifiedCgroupWatch(EventLoop &event_loop, FileDescriptor cgroup2_mount,
-			   Callback _callback);
+			   Callback on_cgroup_added, Callback on_cgroup_empty);
 	~UnifiedCgroupWatch() noexcept;
 
 	void AddCgroup(const char *relative_path);

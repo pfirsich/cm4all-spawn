@@ -146,6 +146,18 @@ DestroyCgroup(const FileDescriptor root_cgroup, const char *relative_path) noexc
 			   relative_path, strerror(errno));
 }
 
+void Instance::OnCgroupAdded(const char *path) noexcept
+{
+	const auto suffix = GetManagedSuffix(path);
+	if (!suffix || std::string_view(suffix) == "_") {
+		return;
+	}
+
+	if (accounting_collector) {
+		accounting_collector->AddCgroup(path);
+	}
+}
+
 void
 Instance::OnCgroupEmpty(const char *path) noexcept
 {
@@ -173,6 +185,10 @@ Instance::OnCgroupEmpty(const char *path) noexcept
 		: CgroupResourceUsage{};
 
 	CollectCgroupStats(suffix, btime, u);
+
+	if (accounting_collector) {
+		accounting_collector->RemoveCgroup(path, u);
+	}
 
 	if (lua_accounting)
 		lua_accounting->InvokeCgroupReleased(std::move(cgroup_fd), path,
