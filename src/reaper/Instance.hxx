@@ -16,6 +16,9 @@
 
 class UnifiedCgroupWatch;
 class LuaAccounting;
+class CgroupAccountingCollector;
+class CgroupAccountingServer;
+struct lua_State;
 
 class Instance final {
 	EventLoop event_loop;
@@ -26,6 +29,9 @@ class Instance final {
 	SignalEvent sighup_event;
 
 	const UniqueFileDescriptor root_cgroup;
+
+	std::unique_ptr<CgroupAccountingCollector> accounting_collector;
+	std::unique_ptr<CgroupAccountingServer> accounting_server;
 
 	std::unique_ptr<UnifiedCgroupWatch> unified_cgroup_watch;
 
@@ -47,9 +53,16 @@ public:
 	}
 
 private:
+	static int LuaAccountingListen(lua_State* L);
+	static std::unique_ptr<LuaAccounting>
+	LoadLuaAccounting(EventLoop &event_loop, const char *path, Instance *instance);
+
 	void OnExit() noexcept;
 	void OnReload(int) noexcept;
 
+	void OnCgroupAdded(const char *path) noexcept;
 	void OnCgroupEmpty(const char *path) noexcept;
 	void OnDeferredCgroupDelete() noexcept;
+
+	void AccountingListen(const char* socket, uint32_t interval_ms);
 };

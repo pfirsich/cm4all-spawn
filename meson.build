@@ -209,6 +209,7 @@ executable('cm4all-spawn-reaper',
     util_dep,
     time_dep,
     fmt_dep,
+    net_dep,
   ],
   install: true,
   install_dir: 'sbin')

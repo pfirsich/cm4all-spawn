@@ -71,9 +71,11 @@ UnifiedCgroupWatch::Group::EventCallback(unsigned) noexcept
 
 UnifiedCgroupWatch::UnifiedCgroupWatch(EventLoop &event_loop,
 				       FileDescriptor cgroup2_mount,
-				       Callback _callback)
+				       Callback on_cgroup_added,
+				       Callback on_cgroup_empty)
 	:TreeWatch(event_loop, cgroup2_mount, "."),
-	 callback(_callback)
+	 on_cgroup_added_callback(on_cgroup_added),
+	 on_cgroup_empty_callback(on_cgroup_empty)
 {
 }
 
@@ -104,7 +106,7 @@ UnifiedCgroupWatch::ReAddCgroup(std::string_view relative_path) noexcept
 void
 UnifiedCgroupWatch::OnGroupEmpty(Group &group) noexcept
 {
-	callback(("/" + group.GetRelativePath()).c_str());
+	on_cgroup_empty_callback(("/" + group.GetRelativePath()).c_str());
 
 	auto i = groups.find(group.GetRelativePath());
 	assert(i != groups.end());
@@ -122,6 +124,8 @@ UnifiedCgroupWatch::InsertGroup(const std::string_view relative_path,
 		/* discard the initial event by reading from the
 		   "cgroup.events" file */
 		IsPopulated(fd);
+
+	on_cgroup_added_callback(("/" + std::string(relative_path)).c_str());
 
 	groups.emplace(std::piecewise_construct,
 		       std::forward_as_tuple(relative_path),
